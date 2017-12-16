@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="flint," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -79,18 +79,17 @@
 
 
 
-<meta name="description" content="Flint的设计目的是制作一个微型应用框架，可以用来随时无侵入性的嵌入到项目中，快速优雅而且小而美的解决一些不值得大动干戈的问题，或者让因为各种限制而不能使用高级特性和三方库的开发（如低性能无法完成线程管理的CPU）变得更加快速而容易。目前已经在我个人开发的大部分嵌入式项目中得到应用，并且极大的提高了流程可控性、性能，">
-<meta name="keywords" content="flint">
+<meta name="description" content="在分布式系统构建中，不可避免会面临诸如小型MAP级K-V存储，客户端负载均衡算法动态实现等等需要高效查询的场景，本文以负载均衡算法为场景，进行红黑树微定制的实现。 首先，列一下设计目标：  一般来讲，客户端部分，红黑树实现应当在服务部分，所以线程安全是必须的，JAVA本身的TreeMap虽然是红黑树的实现，但却并不是线">
 <meta property="og:type" content="article">
-<meta property="og:title" content="flint设计---多任务调度">
-<meta property="og:url" content="http://blog.clearso.com/2017/11/25/flint设计-多任务调度/index.html">
+<meta property="og:title" content="java组件-线程安全红黑树(哈希环虚节点负载均衡场景,基于TreeMap源码)">
+<meta property="og:url" content="http://blog.clearso.com/2017/12/16/java组件-线程安全红黑树-(哈希环虚节点负载均衡场景,基于TreeMap源码/index.html">
 <meta property="og:site_name" content="nuttyshark">
-<meta property="og:description" content="Flint的设计目的是制作一个微型应用框架，可以用来随时无侵入性的嵌入到项目中，快速优雅而且小而美的解决一些不值得大动干戈的问题，或者让因为各种限制而不能使用高级特性和三方库的开发（如低性能无法完成线程管理的CPU）变得更加快速而容易。目前已经在我个人开发的大部分嵌入式项目中得到应用，并且极大的提高了流程可控性、性能，极大的降低了调试难度。其中，多任务调度处理就是核心部分之一。 如何处理多任务同时">
+<meta property="og:description" content="在分布式系统构建中，不可避免会面临诸如小型MAP级K-V存储，客户端负载均衡算法动态实现等等需要高效查询的场景，本文以负载均衡算法为场景，进行红黑树微定制的实现。 首先，列一下设计目标：  一般来讲，客户端部分，红黑树实现应当在服务部分，所以线程安全是必须的，JAVA本身的TreeMap虽然是红黑树的实现，但却并不是线程安全的。 负载均衡采用哈希环1:N虚节点查询方式[PS1.若不清楚见后文解释]">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-11-25T02:39:48.635Z">
+<meta property="og:updated_time" content="2017-12-16T15:18:51.439Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="flint设计---多任务调度">
-<meta name="twitter:description" content="Flint的设计目的是制作一个微型应用框架，可以用来随时无侵入性的嵌入到项目中，快速优雅而且小而美的解决一些不值得大动干戈的问题，或者让因为各种限制而不能使用高级特性和三方库的开发（如低性能无法完成线程管理的CPU）变得更加快速而容易。目前已经在我个人开发的大部分嵌入式项目中得到应用，并且极大的提高了流程可控性、性能，极大的降低了调试难度。其中，多任务调度处理就是核心部分之一。 如何处理多任务同时">
+<meta name="twitter:title" content="java组件-线程安全红黑树(哈希环虚节点负载均衡场景,基于TreeMap源码)">
+<meta name="twitter:description" content="在分布式系统构建中，不可避免会面临诸如小型MAP级K-V存储，客户端负载均衡算法动态实现等等需要高效查询的场景，本文以负载均衡算法为场景，进行红黑树微定制的实现。 首先，列一下设计目标：  一般来讲，客户端部分，红黑树实现应当在服务部分，所以线程安全是必须的，JAVA本身的TreeMap虽然是红黑树的实现，但却并不是线程安全的。 负载均衡采用哈希环1:N虚节点查询方式[PS1.若不清楚见后文解释]">
 
 
 
@@ -120,7 +119,7 @@
 
 
 
-  <link rel="canonical" href="http://blog.clearso.com/2017/11/25/flint设计-多任务调度/"/>
+  <link rel="canonical" href="http://blog.clearso.com/2017/12/16/java组件-线程安全红黑树-(哈希环虚节点负载均衡场景,基于TreeMap源码/"/>
 
 
 
@@ -134,7 +133,7 @@ var _hmt = _hmt || [];
 })();
 </script>
 
-  <title>flint设计---多任务调度 | nuttyshark</title>
+  <title>java组件-线程安全红黑树(哈希环虚节点负载均衡场景,基于TreeMap源码) | nuttyshark</title>
   
 
 
@@ -241,7 +240,7 @@ var _hmt = _hmt || [];
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://blog.clearso.com/2017/11/25/flint设计-多任务调度/">
+    <link itemprop="mainEntityOfPage" href="http://blog.clearso.com/2017/12/16/java组件-线程安全红黑树-(哈希环虚节点负载均衡场景,基于TreeMap源码/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="nuttyshark">
@@ -258,7 +257,7 @@ var _hmt = _hmt || [];
 
         
         
-          <h1 class="post-title" itemprop="name headline">flint设计---多任务调度</h1>
+          <h1 class="post-title" itemprop="name headline">java组件-线程安全红黑树(哈希环虚节点负载均衡场景,基于TreeMap源码)</h1>
         
 
         <div class="post-meta">
@@ -270,8 +269,8 @@ var _hmt = _hmt || [];
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-25T09:15:27+08:00">
-                2017-11-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-16T22:36:32+08:00">
+                2017-12-16
               </time>
             
 
@@ -308,30 +307,27 @@ var _hmt = _hmt || [];
       
 
       
-        <p>Flint的设计目的是制作一个微型应用框架，可以用来随时无侵入性的嵌入到项目中，快速优雅而且小而美的解决一些不值得大动干戈的问题，或者让因为各种限制而不能使用高级特性和三方库的开发（如低性能无法完成线程管理的CPU）变得更加快速而容易。目前已经在我个人开发的大部分嵌入式项目中得到应用，并且极大的提高了流程可控性、性能，极大的降低了调试难度。其中，多任务调度处理就是核心部分之一。</p>
-<p>如何处理多任务同时执行的问题，看似通过线程创建，实则在特定与通用场景下，一直面临几个问题：</p>
+        <p>在分布式系统构建中，不可避免会面临诸如小型MAP级K-V存储，客户端负载均衡算法动态实现等等需要高效查询的场景，本文以负载均衡算法为场景，进行红黑树微定制的实现。</p>
+<p>首先，列一下设计目标：</p>
 <ul>
-<li>如果存在多线程共享变量，引发的并发冲突只能通过加锁之类低效方式来处理</li>
-<li>多线程涉及到堆栈切换等本身是存在调度开销的，在性能敏感的主机上可能会相对较重</li>
-<li>实时性可能会难以保证，同时调度节奏并不不可控，在低于ms响应时间要求的部分可能难以达标</li>
-<li>会产生设计惰性，在部分执行代码中，可能会引入一些会导致长时间阻塞的操作从而引发难以排查的性能问题。</li>
-<li>线程管理与监控调试的难度将随数量线性增加。</li>
-<li>最后，如果CPU不支持多线程OS的话，如何实现？</li>
+<li>一般来讲，客户端部分，红黑树实现应当在服务部分，所以线程安全是必须的，JAVA本身的TreeMap虽然是红黑树的实现，但却并不是线程安全的。</li>
+<li>负载均衡采用哈希环1:N虚节点查询方式[PS1.若不清楚见后文解释]，满足节点动态大量扩容调整并且避免雪崩的要求。</li>
+<li><p>数据存取、操作等主要Map操作与TreeMap兼容</p>
+<p>所以综合这些设计目标，优选的方案就是根据JAVA的TreeMap源码来进行必要的改造以满足我们的要求。TreeMap的源码可以在OpenJdk中看到，我使用的是OpenJdk 8。目录是”jdk\src\share\classes\java\util\TreeMap.java”</p>
+<blockquote>
+<p>eclipse中绑定rt.jar源码至jdk\src\share\classes\即可直接跳转]</p>
+</blockquote>
+</li>
 </ul>
-<p>为了解决这些问题Flint采用了以状态机为基础的多任务轮转调度模型。其中，每个任务均通过返回值自行控制下次调用延时（us级）为单位，各任务采用单线程轮转调度独占运行。这样有几个明显目的与好处：</p>
-<ul>
-<li>所有任务调用每次都是独立的，不会出现同时多个任务执行的情况。</li>
-<li>从设计上就要求每个任务的每次调用均需要快速完成，不能出现任何可能的阻塞，从而根本上避免多线程同时读写冲突问题，而且任何一个函数体的任何一次执行都是无中断从头至尾。</li>
-<li>基于状态机的控制，可以很容易获取当前所有任务的执行状况，并且单个任务的失败并不会导致其他任务的失败。</li>
-<li>无需多线程维护机制，执行效率高。</li>
-<li>由于单任务单次执行耗时极短，一般在低性能MCU上也可以达到50us-1ms左右的调度控制粒度，针对这类实时需求不再需要定时器辅助。</li>
-<li>理论上可以大量扩充任务数，多任务情况（长周期任务影响更小）基本不会引起对性能和内存的影响。一般的线程模型往往有线程限制，尤其是开销随数量增长很快。</li>
-<li>由于任务调度机制的特点，多任务共享变量并不需要担心并发访问问题，所有的访问操作均为互斥执行，极大的降低调试难度。</li>
-<li>非常易于扩展，可以极为简单的动态注册与删除或者失活线程。</li>
-<li>对存储要求很低，纯C实现，极易轻量级整合，也可以简单生成多个实例。</li>
-<li>所有相关内存（任务内除外）均为栈上预分配，无动态内存分配需求。</li>
-</ul>
-<p>具体实现可参考代码（部分）<a href="https://github.com/nuttyshark/flint/blob/master/os/flint_thrd.c" target="_blank" rel="noopener">flint_thrd</a></p>
+<p>浏览源码可以发现 2216 - 2405 为红黑树左右旋，插入后平衡，删除及删除后平衡操作，2048 - 2114 为内部节点实现（实现了Entry接口，并且加入了颜色属性），put、get、remove操作为基础操作可直接参看实现。类比实现采用依赖最小构造的方法，即根据需求引入最少的代码逐步构建。</p>
+<p>针对线程安全问题，由于信息变更次数很少，绝大多数为读操作，所以采用ReentrantReadWriteLock读写锁的方式可以很好的实现安全操作。接口上，还需要暴露一个边际查找接口edge，来完成左开右闭空间的左边界与右边界寻找（一般只使用左边界）。所以总体上写操作的暴露接口为put、remove操作，读操作的暴露接口为edge，采用实现一个静态代理方法的模式完成上锁与卸锁。</p>
+<p>具体实现可参考修改后代码（部分）<a href="https://github.com/nuttyshark/nuttyshark.github.io/blob/master/code/RBTree.java" target="_blank" rel="noopener">rbtree</a></p>
+<hr>
+<blockquote>
+<p>关于哈希环1:N虚节点负载均衡算法</p>
+</blockquote>
+<p>负载均衡常用的被动算法包括(加权)轮询法、(加权)随机法、哈希法等，但是这类算法在出现单点故障以及动态扩容的时候，都会面临新节点不能有效平均其他节点的负载以及分配不均以及单点压力瞬间增大引发的雪崩问题。这时候被动方案中比较简单的方案就是哈希环虚节点映射的模式了，下面举例说明。</p>
+<p>假设银行有4个柜台，门口有无数顾客，则虚节点的方式为每个顾客根据自己的身份证号、手机号、银行卡等唯一标识，生成一个1-100之间的数字，普通的哈希算法一般会说0-25到1号柜台，依次类推，但是突然1号柜台突然有事要请假半天，这时候由于原有算法并不能调整，所以自然变成了0-50号至2号柜台，所以服务压力就变成了2:1:1，这时候2号面临多一倍的用户不堪重负倒下了。。。0-75号又集中到了3号柜台，压力就变成了3:1，3号倒下的更快，这种现象就是雪崩了。。。那1：n虚节点的方式，是4个人分别随机领10个号，用户寻找不大于自己号的虚节点中最大的那个所对应的柜台，这样100个号就被分成了4 x N个号段，随机对应4个柜台，任意连续的两个都没有必然的次序关系。这样，任何一个柜台倒下，其他几个柜台的服务压力依旧是接近1:1:1的，同时引入新的柜台，也会得到近似1:1:1:1:1的服务配比，完美</p>
 
       
     </div>
@@ -347,12 +343,6 @@ var _hmt = _hmt || [];
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/flint/" rel="tag"># flint</a>
-          
-        </div>
-      
 
       
       
@@ -362,15 +352,15 @@ var _hmt = _hmt || [];
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2017/11/25/flint设计-多任务调度/" rel="next" title="flint设计---多任务调度">
+                <i class="fa fa-chevron-left"></i> flint设计---多任务调度
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/12/16/java组件-线程安全红黑树-(哈希环虚节点负载均衡场景,基于TreeMap源码/" rel="prev" title="java组件-线程安全红黑树(哈希环虚节点负载均衡场景,基于TreeMap源码)">
-                java组件-线程安全红黑树(哈希环虚节点负载均衡场景,基于TreeMap源码) <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
